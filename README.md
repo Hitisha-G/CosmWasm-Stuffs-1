@@ -1,1 +1,1 @@
-# CosmWasm-Stuffs-1
+# CosmWasm Exploration -SKADOOSH
