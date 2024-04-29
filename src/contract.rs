@@ -4,7 +4,7 @@ use cosmwasm_std::{
     to_json_binary, Binary, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdResult,
 };
 
-use crate::msg::{self, GreetResp, InstantiateMsg, QueryMsg};
+use crate::msg::{self, GreetResp, InstantiateMsg, QueryMsg, ExecuteMsg,AdminResp};
 use crate::state::ADMINS;
 
 pub fn instantiate(
@@ -36,15 +36,18 @@ pub fn instantiate(
 //     to_json_binary(&resp)
 // }
 
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     use QueryMsg::*;
 
     match msg {
         Greet {} => to_json_binary(&query::greet()?),
+        AdminsList {  } => to_json_binary(&query::admins_list(deps)?),
     }
 }
 
 mod query {
+    use self::msg::AdminResp;
+
     use super::*;
 
     pub fn greet() -> StdResult<GreetResp> {
@@ -55,11 +58,22 @@ mod query {
         Ok(resp)
         // to_json_binary(&resp)
     }
+
+    pub fn admins_list(deps: Deps) -> StdResult<AdminResp>{
+        let admins = ADMINS.load(deps.storage)?;
+        let resp: AdminResp = AdminResp{admins};
+        Ok(resp)
+    }
 }
+
+
+
 
 
 #[cfg(test)]
 mod tests {
+    use crate::msg::AdminResp;
+
     use super::*;
     use cosmwasm_std::from_json;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
@@ -74,13 +88,25 @@ mod tests {
         let resp = query(deps.as_ref(), mock_env(), QueryMsg::Greet {}).unwrap();
 
         let resp: GreetResp = from_json(&resp).unwrap();
+        // let resp:AdminResp = from_bina(&resp).unwrap();
 
         assert_eq!(
             resp,
             GreetResp {
                 message: "Hello CosmWasm".to_owned(),
+                // admins: vec![]
             }
         );
+
+        let admin_resp = query(deps.as_ref(),mock_env(),QueryMsg::AdminsList {  }).unwrap();
+        let admin_resp : AdminResp = from_json(&admin_resp).unwrap();
+        assert_eq!(
+            admin_resp,
+            AdminResp{
+                admins: vec![]
+            }
+        )
+
     }
     #[test]
     fn greet_is_working() {
@@ -93,4 +119,6 @@ mod tests {
             }
         )
     }
+
+    // fn
 }
